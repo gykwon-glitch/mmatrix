@@ -3,10 +3,17 @@ Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
     person("Gayun", "Kwon", , "gykwon@tamu.edu", role = c("aut", "cre"))
-Description: Provides a safe, sparse, and reproducible formula-to-matrix pipeline for high-dimensional data. 
-The core constructor builds a sparse design matrix and a frozen encoding (“spec”) that stores factor levels, contrasts, and transformation rules for consistent application to new data. 
-The package also includes transparent collinearity handling, level management, and comprehensive reporting of dropped or aliased columns.
+Description: Provides a safe, sparse, and reproducible formula-to-matrix pipeline
+  for high-dimensional data. The core constructor builds a sparse design matrix
+  and a frozen encoding ("spec") that stores factor levels, contrasts, and
+  transformation rules for consistent application to new data. The package also
+  includes transparent collinearity handling, level management, and comprehensive
+  reporting of dropped or aliased columns.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+Imports: 
+    Matrix,
+    methods,
+    stats
