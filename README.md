@@ -30,7 +30,7 @@ pak::pak("gykwon-glitch/mmatrix")
 
 1.  Finish making the code for mm_predict, considering using S3 class
     print instead of mm_report.
-2.  (if time permits) do several tests
+2.  (if time permits) do several tests or make vignettes
 
 ## Example
 
