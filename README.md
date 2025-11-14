@@ -22,8 +22,8 @@ You can install the development version of mmatrix from
 [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("pak")
-pak::pak("gykwon-glitch/mmatrix")
+# install.packages("devtools")
+devtools::install_github("gykwon-glitch/mmatrix")
 ```
 
 ## TO DO
