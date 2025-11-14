@@ -4,6 +4,7 @@
 
 #' @keywords internal
 #' @noRd
+#' @importFrom methods as
 diag_abs_safe <- function(M) {
   # Safely extract absolute values of diagonal elements from a Matrix object,
   # even if conversion is needed (for dense fallback).
