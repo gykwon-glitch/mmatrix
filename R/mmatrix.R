@@ -6,13 +6,17 @@
 #' @param formula A model formula.
 #' @param data A (cleaned) model.frame or data.frame.
 #' @param collin_tol Numeric tolerance for \eqn{R} diagonal (rank-def detection).
-#' @param prefer_keep Character vector of column names to protect.
-#' @param prefer_keep_hard Logical; if TRUE, prefer_keep columns are never dropped.
+#' @param prefer_keep Character vector of column names to prioritize when
+#'   resolving rank-deficiency. Columns in \code{prefer_keep} are dropped
+#'   later than others, but may still be removed unless
+#'   \code{prefer_keep_hard = TRUE}.
+#' @param prefer_keep_hard Logical; if \code{TRUE}, columns listed in
+#'   \code{prefer_keep} are never dropped as aliased, even if this leaves the
+#'   design matrix rank-deficient (use with care).
 #' @param contrasts.arg Passed to \code{sparse.model.matrix}.
 #' @param xlev Passed to \code{sparse.model.matrix}.
 #' @param na_as_level Logical; treat NA as its own factor level.
 #' @param other_level Level to map unseen levels to ("Other").
-#'
 #' @return An object of class \code{mmatrix_spec}
 #' @export
 mmatrix <- function(formula, data, collin_tol = 1e-9,
@@ -95,7 +99,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
 
     # HARD POLICY: never drop prefer_keep columns
     if (isTRUE(prefer_keep_hard) && !is.null(prefer_keep)) {
-      hard_keep_idx <- which(coln1 %in% prefer_keep)
+      hard_keep_idx <- cand_idx[prot]   # == cand_idx[coln1[cand_idx] %in% prefer_keep]
       drop2 <- setdiff(drop2, hard_keep_idx)
     }
 
