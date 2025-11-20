@@ -1,24 +1,23 @@
 #' Schema-safe sparse model matrix with QR-based collinearity handling
 #'
 #' Builds a sparse design matrix via \code{Matrix::sparse.model.matrix},
-#' and removes aliased columns using a numerically stabilized QR decomposition.
+#' drops aliased columns using a numerically stabilized QR.
 #'
 #' @param formula A model formula.
 #' @param data A (cleaned) model.frame or data.frame.
-#' @param collin_tol Numeric tolerance for \eqn{R} diagonals in the QR
-#'   decomposition (for rank-deficiency detection).
-#' @param prefer_keep Character vector of column names to prioritize during
-#'   rank-deficiency resolution. These columns receive higher priority but
-#'   may still be dropped unless \code{prefer_keep_hard = TRUE}.
+#' @param collin_tol Numeric tolerance for \eqn{R} diagonal (rank-def detection).
+#' @param prefer_keep Character vector of column names to prioritize when
+#'   resolving rank-deficiency. Columns in \code{prefer_keep} are annotated
+#'   and given higher priority, but may still be removed unless
+#'   \code{prefer_keep_hard = TRUE}.
 #' @param prefer_keep_hard Logical; if \code{TRUE}, columns listed in
-#'   \code{prefer_keep} are never dropped during the collinearity resolution
-#'   step. Note that this may leave the final design matrix rank-deficient
-#'   if collinearity involves only the hard-protected columns.
+#'   \code{prefer_keep} are never considered as drop candidates in the
+#'   collinearity resolution step. This may leave the final design matrix
+#'   rank-deficient if collinearity only involves hard-protected columns.
 #' @param contrasts.arg Passed to \code{sparse.model.matrix}.
 #' @param xlev Passed to \code{sparse.model.matrix}.
-#' @param na_as_level Logical; treat NA values as their own factor level.
-#' @param other_level A level to which unseen factor levels will be mapped
-#'   (default: "Other").
+#' @param na_as_level Logical; treat NA as its own factor level.
+#' @param other_level Level to map unseen levels to ("Other").
 #'
 #' @return An object of class \code{mmatrix_spec}
 #' @export
@@ -30,7 +29,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
 
   stopifnot(is.data.frame(data))
 
-  # 1) Build the raw sparse model matrix
+  # 1) raw sparse model matrix
   X0 <- Matrix::sparse.model.matrix(
     object = formula,
     data = data,
@@ -43,7 +42,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
   coln <- colnames(X0)
   term_labels <- c("(Intercept)", attr(trm, "term.labels"))
 
-  # 2) Drop all-zero columns
+  # 2) drop all-zero columns
   nz <- Matrix::colSums(X0 != 0)
   keep_idx <- which(nz > 0)
   drop_idx <- setdiff(seq_len(ncol(X0)), keep_idx)
@@ -65,7 +64,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
   assign_vec1 <- assign_vec[keep_idx]
   coln1 <- colnames(X1)
 
-  # 3) Column normalization + QR for rank estimation
+  # 3) Full-matrix normalization + QR (for rank estimation and alias detection)
   cnorm_full <- sqrt(Matrix::colSums(X1^2))
   cnorm_full[cnorm_full == 0] <- 1
   X1_qr_full <- X1 %*% Matrix::Diagonal(x = 1 / cnorm_full)
@@ -74,96 +73,90 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
   R_full  <- Matrix::qr.R(QR_full)
   dR_full <- diag_abs_safe(R_full)
 
-  rank_hat <- if (length(dR_full)) sum(dR_full > collin_tol) else 0L
+  p_full    <- length(dR_full)
+  rank_full <- if (p_full) sum(dR_full > collin_tol) else 0L
+  piv_full  <- QR_full@q + 1L
 
-  # 4) Collinearity handling (excluding hard-protected columns)
-  #    - Hard-protected columns are never candidates for dropping.
-  #    - If collinearity occurs solely among hard-protected columns,
-  #      we keep them and allow the final matrix to remain rank-deficient.
+  # 4) Handling aliased columns
+  #    (Candidates are identified from the full X1; hard/soft prefer_keep
+  #     rules are applied only when choosing which candidates to drop.)
+  if (p_full > 0L && rank_full < p_full) {
+    # Aliased columns in the full matrix (indices in X1)
+    aliased_local <- piv_full[(rank_full + 1L):p_full]
+    cand_idx      <- sort(aliased_local)
 
-  hard_mask <- rep(FALSE, length(coln1))
-  if (!is.null(prefer_keep) && isTRUE(prefer_keep_hard)) {
-    hard_mask <- coln1 %in% prefer_keep
-  }
+    # Soft prefer_keep flags (based on full X1)
+    prot_soft <- if (is.null(prefer_keep)) {
+      rep(FALSE, length(cand_idx))
+    } else {
+      coln1[cand_idx] %in% prefer_keep
+    }
 
-  # If all columns are hard-protected or no droppable columns exist
-  if (all(hard_mask) || !any(!hard_mask)) {
-    X2          <- X1
-    assign_vec2 <- assign_vec1
-  } else {
+    is_inter   <- grepl(":", coln1[cand_idx], fixed = TRUE)
+    rare_score <- Matrix::colSums(X1[, cand_idx, drop = FALSE] != 0)
 
-    sub_idx <- which(!hard_mask)
-    X_sub   <- X1[, sub_idx, drop = FALSE]
+    # Hard-protected columns: removed only from the drop-candidate set
+    hard_mask_cand <- rep(FALSE, length(cand_idx))
+    if (!is.null(prefer_keep) && isTRUE(prefer_keep_hard)) {
+      hard_mask_cand <- coln1[cand_idx] %in% prefer_keep
+    }
 
-    # QR on the droppable subset
-    cnorm_sub <- sqrt(Matrix::colSums(X_sub^2))
-    cnorm_sub[cnorm_sub == 0] <- 1
-    X_sub_qr <- X_sub %*% Matrix::Diagonal(x = 1 / cnorm_sub)
+    cand_for_drop_idx <- cand_idx[!hard_mask_cand]
+    prot_for_drop     <- prot_soft[!hard_mask_cand]
+    is_inter_dropset  <- is_inter[!hard_mask_cand]
+    rare_dropset      <- rare_score[!hard_mask_cand]
 
-    QR_sub <- Matrix::qr(X_sub_qr)
-    R_sub  <- Matrix::qr.R(QR_sub)
-    dR_sub <- diag_abs_safe(R_sub)
+    if (length(cand_for_drop_idx)) {
 
-    p_sub   <- length(dR_sub)
-    rank_sub <- if (p_sub) sum(dR_sub > collin_tol) else 0L
-    piv_sub  <- QR_sub@q + 1L
+      # Drop ordering: soft prefer_keep is a weak priority
+      ord   <- order(!prot_for_drop, !is_inter_dropset, rare_dropset)
+      drop2 <- cand_for_drop_idx[ord]
 
-    if (p_sub > 0L && rank_sub < p_sub) {
-      # Local aliased columns within this subset
-      aliased_local <- piv_sub[(rank_sub + 1L):p_sub]
-      cand_idx      <- sort(sub_idx[aliased_local])
+      # Match protected/interaction attributes using original cand_idx positions
+      pos_in_cand   <- match(drop2, cand_idx)
+      is_inter_drop <- is_inter[pos_in_cand]
+      prot_drop     <- prot_soft[pos_in_cand]
 
-      # Soft protection (non-hard-protected columns only)
-      prot_soft <- if (is.null(prefer_keep)) {
-        rep(FALSE, length(cand_idx))
-      } else {
-        coln1[cand_idx] %in% prefer_keep
-      }
+      dr2 <- data.frame(
+        column    = coln1[drop2],
+        term      = term_labels[assign_vec1[drop2] + 1L],
+        type      = ifelse(is_inter_drop, "interaction", "numeric/dummy"),
+        reason    = "aliased (rank-def)",
+        metric    = sprintf("diagR<=%.1e", collin_tol),
+        protected = prot_drop,
+        stringsAsFactors = FALSE
+      )
 
-      is_inter   <- grepl(":", coln1[cand_idx], fixed = TRUE)
-      rare_score <- Matrix::colSums(X1[, cand_idx, drop = FALSE] != 0)
+      dr <- rbind(dr, dr2)
 
-      # Priority order: keep soft-protected, interactions, and common levels
-      ord   <- order(!prot_soft, !is_inter, rare_score)
-      drop2 <- cand_idx[ord]
-
-      # Soft-protected columns may still be dropped; record 'protected=TRUE'
-      if (length(drop2)) {
-
-        keep_mask     <- cand_idx %in% drop2
-        is_inter_drop <- is_inter[keep_mask]
-        prot_drop     <- prot_soft[keep_mask]
-
-        dr2 <- data.frame(
-          column    = coln1[drop2],
-          term      = term_labels[assign_vec1[drop2] + 1L],
-          type      = ifelse(is_inter_drop, "interaction", "numeric/dummy"),
-          reason    = "aliased (rank-def)",
-          metric    = sprintf("diagR<=%.1e", collin_tol),
-          protected = prot_drop,
-          stringsAsFactors = FALSE
-        )
-
-        dr <- rbind(dr, dr2)
-
-        keep2       <- setdiff(seq_len(ncol(X1)), drop2)
-        X2          <- X1[, keep2, drop = FALSE]
-        assign_vec2 <- assign_vec1[keep2]
-
-      } else {
-        # Fallback: no drops (rare in practice)
-        X2          <- X1
-        assign_vec2 <- assign_vec1
-      }
+      keep2       <- setdiff(seq_len(ncol(X1)), drop2)
+      X2          <- X1[, keep2, drop = FALSE]
+      assign_vec2 <- assign_vec1[keep2]
 
     } else {
-      # No rank deficiency in the droppable subset
+      # If no aliased columns can be dropped due to hard-protection:
+      # allow the final design matrix to remain rank-deficient
       X2          <- X1
       assign_vec2 <- assign_vec1
     }
+
+  } else {
+    # No rank deficiency → nothing to drop
+    X2          <- X1
+    assign_vec2 <- assign_vec1
   }
 
-  # 5) Build schema specification object
+  # 5) Recompute rank using the final design matrix (rank_final)
+  cnorm_fin <- sqrt(Matrix::colSums(X2^2))
+  cnorm_fin[cnorm_fin == 0] <- 1
+  X2_qr <- X2 %*% Matrix::Diagonal(x = 1 / cnorm_fin)
+
+  QR_fin <- Matrix::qr(X2_qr)
+  R_fin  <- Matrix::qr.R(QR_fin)
+  dR_fin <- diag_abs_safe(R_fin)
+  rank_final <- if (length(dR_fin)) sum(dR_fin > collin_tol) else 0L
+
+  # 6) Build schema spec
   sp <- build_spec(
     formula     = formula,
     data        = data,
@@ -176,18 +169,20 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
     assign_map  = assign_vec2
   )
 
-  # 6) Create output object (S3)
+  # 7) Create object (S3)
   result <- structure(
     list(
       X           = X2,
       spec        = sp,
       drop_report = dr,
-      rank        = rank_hat,    # estimated rank from full normalized QR
+      rank_full   = rank_full,     # Rank based on full X1
+      rank_final  = rank_final,    # Rank based on final X2
+      rank        = rank_final,    # backward-compatible 'rank' field
       assign_map  = assign_vec2,
       contrasts   = contrasts.arg,
       xlev        = xlev,
-      orig_p      = ncol(X0),    # number of columns before dropping
-      final_p     = ncol(X2)     # number of columns after dropping
+      orig_p      = ncol(X0),      # Original number of columns
+      final_p     = ncol(X2)       # Final number of columns
     ),
     class = c("mmatrix_spec")
   )
