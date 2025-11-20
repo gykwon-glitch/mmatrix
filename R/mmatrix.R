@@ -153,7 +153,9 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
       rank        = rank_hat,
       assign_map  = assign_vec2,
       contrasts   = contrasts.arg,
-      xlev        = xlev
+      xlev        = xlev,
+      orig_p      = ncol(X0),     # original dimension p
+      final_p     = ncol(X2)      # final dimension p
     ),
     class = c("mmatrix_spec")
   )

@@ -13,13 +13,14 @@ print.mmatrix_spec <- function(x, ...) {
   dens <- nnz / (n * p)
 
   cat("mmatrix_spec object\n")
-  cat(sprintf("  - design dims   : %d x %d\n", n, p))
+  cat(sprintf("  - original dims : %d x %d\n", nrow(x$X), x$orig_p))
+  cat(sprintf("  - final design dims   : %d x %d\n", n, x$final_p))
   cat(sprintf("  - rank (QR est.): %s\n",
               ifelse(is.null(x$rank), "NA", as.character(x$rank))))
   cat(sprintf("  - nonzero (density) : %d (%.4f)\n", nnz, dens))
 
   if (!is.null(x$drop_report) && nrow(x$drop_report) > 0) {
-    cat(sprintf("  - dropped cols  : %d (showing up to 5)\n",
+    cat(sprintf("  - dropped cols  : %d (showing up to 5)\n", # change if not making mm_report
                 nrow(x$drop_report)))
     print(utils::head(x$drop_report, 5), row.names = FALSE)
   } else {
