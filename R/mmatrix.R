@@ -7,8 +7,8 @@
 #' @param data A (cleaned) model.frame or data.frame.
 #' @param collin_tol Numeric tolerance for \eqn{R} diagonal (rank-def detection).
 #' @param prefer_keep Character vector of column names to prioritize when
-#'   resolving rank-deficiency. Columns in \code{prefer_keep} are dropped
-#'   later than others, but may still be removed unless
+#'   resolving rank-deficiency. Columns in \code{prefer_keep} are annotated
+#'   and given higher priority, but may still be removed unless
 #'   \code{prefer_keep_hard = TRUE}.
 #' @param prefer_keep_hard Logical; if \code{TRUE}, columns listed in
 #'   \code{prefer_keep} are never dropped as aliased, even if this leaves the
