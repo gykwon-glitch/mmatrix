@@ -8,31 +8,26 @@
 summary.mmatrix_spec <- function(object, ...) {
   stopifnot(inherits(object, "mmatrix_spec"))
 
-  n  <- nrow(object$X)
-  p  <- ncol(object$X)
-  nnz <- Matrix::nnzero(object$X)
-  dens <- nnz / (n * p)
+  X <- object$X
+  n <- nrow(X)
+  p <- ncol(X)
+  nnz <- Matrix::nnzero(X)
+  dens <- if (n * p > 0) nnz / (n * p) else NA_real_
 
-  out <- list(
-    n = n,
-    p = p,
-    nnzero = nnz,
-    density = dens,
-    rank = object$rank,
-    dropped = object$drop_report
-  )
+  rank_full  <- if (!is.null(object$rank_full))  object$rank_full  else object$rank
+  rank_final <- if (!is.null(object$rank_final)) object$rank_final else object$rank
+  drop_n     <- if (is.null(object$drop_report)) 0L else nrow(object$drop_report)
 
-  class(out) <- c("summary.mmatrix_spec", "list")
-
-  # simple summary
   cat("Summary of mmatrix_spec\n")
-  cat(sprintf("  dims     : %d x %d\n", n, p))
+  cat(sprintf("  dims      : %d x %d\n", n, p))
   cat(sprintf("  nonzero   : %d (density = %.4f)\n", nnz, dens))
-  cat(sprintf("  rank     : %s\n",
-              ifelse(is.null(object$rank), "NA", as.character(object$rank))))
-  cat(sprintf("  dropped  : %d columns\n",
-              ifelse(is.null(object$drop_report),
-                     0L, nrow(object$drop_report %||% data.frame()))))
+  cat(sprintf("  rank (full / final) : %d / %d\n", rank_full, rank_final))
+  cat(sprintf("  dropped   : %d columns\n", drop_n))
 
-  invisible(out)
+  if (!is.null(rank_final) && rank_final < p) {
+    cat(sprintf("  * Note: final design still rank-deficient (rank %d < %d cols) under tol.\n",
+                rank_final, p))
+  }
+
+  invisible(object)
 }
