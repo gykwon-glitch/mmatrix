@@ -4,6 +4,113 @@
 #' @param unknown c("other","zero","error")
 #' @return sparseMatrix with the same columns/order as training
 #' @export
-mm_predict <- function(spec, newdata, unknown = c("other","zero","error")) {
-  # TODO
+mm_predict <- function(spec, newdata, unknown = c("other", "zero", "error")) {
+  # Match unknown handling policy
+  unknown <- match.arg(unknown)
+
+  # Basic spec sanity checks
+  stopifnot(
+    is.list(spec),
+    !is.null(spec$terms),
+    !is.null(spec$formula),
+    !is.null(spec$levels_map),
+    !is.null(spec$col_order)
+  )
+
+  # 1) Coerce factors/characters to training schema levels
+  #    and apply unknown-level policy
+  nd <- newdata
+
+  for (nm in names(spec$levels_map)) {
+    if (!nm %in% names(nd)) next
+
+    x <- nd[[nm]]
+
+    # Handle both factor and character inputs
+    if (is.factor(x) || is.character(x)) {
+      lv <- spec$levels_map[[nm]]
+
+      # Work on character representation first
+      xchar <- as.character(x)
+
+      # Detect unseen levels relative to training levels
+      unseen <- setdiff(unique(xchar), c(lv, NA))
+
+      if (length(unseen)) {
+        if (unknown == "error") {
+          stop(sprintf("Unseen level in '%s': %s",
+                       nm, paste(unseen, collapse = ", ")))
+        }
+
+        if (unknown == "other") {
+          # Map all unseen levels to the designated "other" level
+          other_level <- spec$other_level
+          xchar[!(xchar %in% lv)] <- other_level
+          lv2 <- union(lv, other_level)
+          x <- factor(
+            xchar,
+            levels  = lv2,
+            exclude = if (isTRUE(spec$na_as_level)) NULL else NA
+          )
+
+        } else if (unknown == "zero") {
+          # Map all unseen levels to NA → their dummy columns will be all zeros
+          xchar[!(xchar %in% lv)] <- NA
+          x <- factor(
+            xchar,
+            levels  = lv,
+            exclude = if (isTRUE(spec$na_as_level)) NULL else NA
+          )
+        }
+
+      } else {
+        # No unseen levels: just coerce to the training levels
+        x <- factor(
+          xchar,
+          levels  = lv,
+          exclude = if (isTRUE(spec$na_as_level)) NULL else NA
+        )
+      }
+
+      nd[[nm]] <- x
+    }
+  }
+
+  # 2) Build sparse design matrix using the training formula/contrasts
+  Xn <- Matrix::sparse.model.matrix(
+    object        = spec$formula,
+    data          = nd,
+    contrasts.arg = spec$contrasts
+  )
+
+  # 3) Align columns to the training schema (same set + same order)
+  want <- spec$col_order
+  have <- colnames(Xn)
+
+  # (a) Drop extra columns not present in the training schema
+  extra_cols <- setdiff(have, want)
+  if (length(extra_cols)) {
+    Xn <- Xn[, have %in% want, drop = FALSE]
+    have <- colnames(Xn)
+  }
+
+  # (b) Add missing columns as all-zero sparse columns
+  missing_cols <- setdiff(want, have)
+  if (length(missing_cols)) {
+    pad <- Matrix::Matrix(
+      0,
+      nrow   = nrow(Xn),
+      ncol   = length(missing_cols),
+      sparse = TRUE
+    )
+    colnames(pad) <- missing_cols
+
+    # Use base cbind() – dispatches to Matrix methods for sparse matrices
+    Xn <- cbind(Xn, pad)
+  }
+
+  # (c) Final column reordering to match the training schema exactly
+  Xn <- Xn[, want, drop = FALSE]
+
+  return(Xn)
 }
