@@ -54,8 +54,11 @@ mm_predict <- function(spec, newdata, unknown = c("other", "zero", "error")) {
           )
 
         } else if (unknown == "zero") {
-          # Map all unseen levels to NA → their dummy columns will be all zeros
-          xchar[!(xchar %in% lv)] <- NA
+          # Map all unseen levels to the baseline level (first training level)
+          # Under the default treatment contrasts, this gives all-zero dummies.
+          baseline_level <- lv[1L]
+          xchar[!(xchar %in% lv)] <- baseline_level
+
           x <- factor(
             xchar,
             levels  = lv,
