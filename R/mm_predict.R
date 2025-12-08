@@ -21,6 +21,10 @@ mm_predict <- function(spec, newdata, unknown = c("other", "zero", "error")) {
   #    and apply unknown-level policy
   nd <- newdata
 
+  if (unknown == "other" && is.null(spec$other_level)) {
+    stop("unknown = 'other' requires spec$other_level to be set by mmatrix().")
+  } # guard for unknown = "other"
+
   for (nm in names(spec$levels_map)) {
     if (!nm %in% names(nd)) next
 
