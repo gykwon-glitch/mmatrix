@@ -18,46 +18,43 @@ factor when \code{show_levels = TRUE}. Default is \code{10}.}
 \value{
 A named list summarizing the encoded design matrix and its encodings,
 with the following components:
-
 \describe{
 \item{dims}{Named integer vector with the dimensions of the design
 matrix, \code{c(n, p)}, where \code{n} is the number of rows and
 \code{p} is the number of columns.}
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{\\item\{nnzero\}\{Total number of non-zero entries in the sparse design
-  matrix (as computed by \code{Matrix::nnzero()}).\}
+\item{nnzero}{Total number of non-zero entries in the sparse design
+matrix (as computed by \code{Matrix::nnzero()}).}
 
-\\item\{density\}\{Proportion of non-zero entries in the design matrix:
-  \code{nnzero / (n * p)}.\}
+\item{density}{Proportion of non-zero entries in the design matrix:
+\code{nnzero / (n * p)}.}
 
-\\item\{sparsity\}\{Proportion of zero entries in the design matrix:
-  \code{1 - density}.\}
+\item{sparsity}{Proportion of zero entries in the design matrix:
+\code{1 - density}.}
 
-\\item\{mem_sparse_mb\}\{Approximate memory usage (in megabytes) of the
-  sparse design matrix object (based on \code{utils::object.size()}).\}
+\item{mem_sparse_mb}{Approximate memory usage (in megabytes) of the
+sparse design matrix object (based on \code{utils::object.size()}).}
 
-\\item\{mem_dense_est_mb\}\{Approximate memory usage (in megabytes) that a
-  dense \code{n x p} \code{double} matrix would require
-  (\code{n * p * 8} bytes).\}
+\item{mem_dense_est_mb}{Approximate memory usage (in megabytes) that a
+dense \code{n x p} \code{double} matrix would require
+(\code{n * p * 8} bytes).}
 
-\\item\{rank\}\{Estimated numerical rank of the design matrix, typically
-  carried over from \code{spec$rank}.\}
+\item{rank}{Estimated numerical rank of the design matrix, typically
+carried over from \code{spec$rank}.}
 
-\\item\{drop_report_head\}\{Either \code{NULL} or a small
-  \code{data.frame} containing the first few rows (up to 10) of the
-  drop report, summarizing columns that were dropped due to zero
-  variance, perfect collinearity, or other preprocessing.\}
+\item{drop_report_head}{Either \code{NULL} or a small
+\code{data.frame} containing the first few rows (up to 10) of the
+drop report, summarizing columns that were dropped due to zero
+variance, perfect collinearity, or other preprocessing.}
 
-\\item\{factor_levels\}\{Either \code{NULL} or a \code{data.frame} that
-  summarizes factor encodings used in the design. Typical columns are:
-  \\describe\{
-    \\item\{variable\}\{Name of the original factor variable.\}
-    \\item\{n_levels\}\{Number of levels of the factor.\}
-    \\item\{levels_preview\}\{Comma-separated preview of the first
-      \code{max_levels_preview} levels, as shown in the printed report.\}
-  \}\}
-}\if{html}{\out{</div>}}
-
+\item{factor_levels}{Either \code{NULL} or a \code{data.frame} that
+summarizes factor encodings used in the design. Typical columns are:
+\describe{
+\item{variable}{Name of the original factor variable.}
+\item{n_levels}{Number of levels of the factor.}
+\item{levels_preview}{Comma-separated preview of the first
+\code{max_levels_preview} levels, as shown in the printed report.}
+}}
 }
 }
 \description{
