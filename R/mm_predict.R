@@ -1,9 +1,23 @@
 #' Schema-safe transform for new data
-#' @param spec spec from mmatrix()
-#' @param newdata data.frame
-#' @param unknown c("other","zero","error")
-#' @return sparseMatrix with the same columns/order as training
+#'
+#' Apply an `mmatrix()` spec to new data, returning a sparse design matrix
+#' with the same columns and ordering as in training.
+#'
+#' @param spec Spec object produced by mmatrix().
+#' @param newdata A `data.frame` of new observations.
+#' @param unknown How to handle unseen factor levels in `newdata`:
+#'   one of `"other"`, `"zero"`, or `"error"`.
+#'
+#' @return A `Matrix::sparseMatrix` with the same columns/order as the
+#'   training design matrix.
+#'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#'   spec <- mmatrix(~ color + x, data = df_train)
+#'   X_new <- mm_predict(spec, df_new, unknown = "other")
+#' }
 mm_predict <- function(spec, newdata, unknown = c("other", "zero", "error")) {
   # Match unknown handling policy
   unknown <- match.arg(unknown)
