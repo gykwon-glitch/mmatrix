@@ -23,9 +23,15 @@ mmatrix(
 
 \item{collin_tol}{Numeric tolerance for \eqn{R} diagonal (rank-def detection).}
 
-\item{prefer_keep}{Character vector of column names to protect.}
+\item{prefer_keep}{Character vector of column names to prioritize when
+resolving rank-deficiency. Columns in \code{prefer_keep} are annotated
+and given higher priority, but may still be removed unless
+\code{prefer_keep_hard = TRUE}.}
 
-\item{prefer_keep_hard}{Logical; if TRUE, prefer_keep columns are never dropped.}
+\item{prefer_keep_hard}{Logical; if \code{TRUE}, columns listed in
+\code{prefer_keep} are never considered as drop candidates in the
+collinearity resolution step. This may leave the final design matrix
+rank-deficient if collinearity only involves hard-protected columns.}
 
 \item{contrasts.arg}{Passed to \code{sparse.model.matrix}.}
 

@@ -7,15 +7,24 @@
 mm_predict(spec, newdata, unknown = c("other", "zero", "error"))
 }
 \arguments{
-\item{spec}{spec from mmatrix()}
+\item{spec}{Spec object produced by mmatrix().}
 
-\item{newdata}{data.frame}
+\item{newdata}{A \code{data.frame} of new observations.}
 
-\item{unknown}{c("other","zero","error")}
+\item{unknown}{How to handle unseen factor levels in \code{newdata}:
+one of \code{"other"}, \code{"zero"}, or \code{"error"}.}
 }
 \value{
-sparseMatrix with the same columns/order as training
+A \code{Matrix::sparseMatrix} with the same columns/order as the
+training design matrix.
 }
 \description{
-Schema-safe transform for new data
+Apply an \code{mmatrix()} spec to new data, returning a sparse design matrix
+with the same columns and ordering as in training.
+}
+\examples{
+\dontrun{
+  spec <- mmatrix(~ color + x, data = df_train)
+  X_new <- mm_predict(spec, df_new, unknown = "other")
+}
 }

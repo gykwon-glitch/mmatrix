@@ -3,5 +3,7 @@
 S3method(print,mmatrix_spec)
 S3method(summary,mmatrix_spec)
 export(mm_predict)
+export(mm_report)
 export(mmatrix)
 importFrom(methods,as)
+importFrom(utils,object.size)
