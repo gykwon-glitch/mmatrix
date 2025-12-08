@@ -1,5 +1,5 @@
 Package: mmatrix
-Title: What the Package Does (One Line, Title Case)
+Title: Safe and Reproducible Sparse Model-Matrix Construction
 Version: 0.0.0.9000
 Authors@R: 
     person("Gayun", "Kwon", , "gykwon@tamu.edu", role = c("aut", "cre"))
