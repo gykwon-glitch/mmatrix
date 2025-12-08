@@ -1,27 +1,27 @@
-#' Schema-safe transform for new data
+#' Summary report for an mmatrix spec
 #'
-#' Applies the encoding schema learned by `mmatrix()` to new data,
-#' ensuring the same column set and ordering as in the training design matrix.
+#' Produces a compact summary of an `mmatrix` specification, including
+#' column roles, types, factor levels, and memory usage of the design matrix.
 #'
 #' @param spec A specification object produced by `mmatrix()`.
-#' @param newdata A `data.frame` of new observations.
-#' @param unknown How to handle unseen factor levels:
-#'   `"other"` (map to `spec$other_level`),
-#'   `"zero"` (map to baseline → zero dummy),
-#'   `"error"` (stop with an error).
-#'   Default: `c("other","zero","error")`.
+#' @param show_levels Logical; if `TRUE`, include a preview of factor levels
+#'   for each categorical column. Default is `TRUE`.
+#' @param max_levels_preview Integer; maximum number of levels to show per
+#'   factor when `show_levels = TRUE`. Default is `10`.
 #'
-#' @return A sparse design matrix whose columns and ordering
-#'   match those of the training matrix.
+#' @return An object (typically a `data.frame` or list) summarizing the
+#'   encoded columns, their types, and approximate memory usage.
 #'
+#' @importFrom utils object.size
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#'   spec <- mmatrix(~ color + x, iris)
-#'   X_new <- mm_predict(spec, iris[1:5, ])
+#'   spec <- mmatrix(~ Species + Sepal.Length, iris)
+#'   mm_report(spec)
 #' }
-#'
+#'#' @importFrom utils object.size
+
 mm_report <- function(spec,
                       show_levels = TRUE,
                       max_levels_preview = 6) {
