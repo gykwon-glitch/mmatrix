@@ -1,4 +1,27 @@
-# TO DO
+#' Schema-safe transform for new data
+#'
+#' Applies the encoding schema learned by `mmatrix()` to new data,
+#' ensuring the same column set and ordering as in the training design matrix.
+#'
+#' @param spec A specification object produced by `mmatrix()`.
+#' @param newdata A `data.frame` of new observations.
+#' @param unknown How to handle unseen factor levels:
+#'   `"other"` (map to `spec$other_level`),
+#'   `"zero"` (map to baseline → zero dummy),
+#'   `"error"` (stop with an error).
+#'   Default: `c("other","zero","error")`.
+#'
+#' @return A sparse design matrix whose columns and ordering
+#'   match those of the training matrix.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'   spec <- mmatrix(~ color + x, iris)
+#'   X_new <- mm_predict(spec, iris[1:5, ])
+#' }
+#'
 mm_report <- function(spec,
                       show_levels = TRUE,
                       max_levels_preview = 6) {
