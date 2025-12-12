@@ -201,6 +201,7 @@ hp       = c(150, 90)
 # Apply the training schema to new data
 
 X_new <- mm_predict(fit$spec, newdata = newdata, unknown = "zero")
+
 X_new
 #> 2 x 7 sparse Matrix of class "dgCMatrix"
 #>   (Intercept) cyl6 cyl8 ammanual high_hplow  wt  hp
@@ -237,7 +238,7 @@ hp       = c(150, 90)
 
 X_zero <- mm_predict(fit$spec, newdata2, unknown = "zero")
 
-dim(X_zero)
+dim(X_zero) # This keeps the same number of columns and column order as the training design matrix.
 #> [1] 2 7
 ```
 
