@@ -34,14 +34,13 @@ get_levels_map <- function(data, terms_obj) {
 #' @keywords internal
 #' @noRd
 build_spec <- function(formula, data, terms_obj, levels_map, contrasts,
-                       other_level, na_as_level, colnames, assign_map) {
+                       na_as_level, colnames, assign_map) {
   # Package all schema info into a structured list
   spec_list <- list(
     formula      = formula,
     terms        = terms_obj,
     levels_map   = levels_map,
     contrasts    = contrasts,
-    other_level  = other_level,
     na_as_level  = na_as_level,
     col_order    = colnames,
     assign_map   = assign_map

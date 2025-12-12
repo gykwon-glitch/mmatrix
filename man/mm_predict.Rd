@@ -4,7 +4,7 @@
 \alias{mm_predict}
 \title{Schema-safe transform for new data}
 \usage{
-mm_predict(spec, newdata, unknown = c("other", "zero", "error"))
+mm_predict(spec, newdata, unknown = c("zero", "error"))
 }
 \arguments{
 \item{spec}{Spec object produced by mmatrix().}
@@ -12,7 +12,13 @@ mm_predict(spec, newdata, unknown = c("other", "zero", "error"))
 \item{newdata}{A \code{data.frame} of new observations.}
 
 \item{unknown}{How to handle unseen factor levels in \code{newdata}:
-one of \code{"other"}, \code{"zero"}, or \code{"error"}.}
+one of \code{"zero"} or \code{"error"}.
+\itemize{
+\item \code{"zero"}: map unseen levels to the baseline level
+(first training level). Under default treatment contrasts,
+this yields all-zero dummy columns.
+\item \code{"error"}: throw an error if any unseen level is found.
+}}
 }
 \value{
 A \code{Matrix::sparseMatrix} with the same columns/order as the
@@ -25,6 +31,6 @@ with the same columns and ordering as in training.
 \examples{
 \dontrun{
   spec <- mmatrix(~ color + x, data = df_train)
-  X_new <- mm_predict(spec, df_new, unknown = "other")
+  X_new <- mm_predict(spec, df_new, unknown = "zero")
 }
 }

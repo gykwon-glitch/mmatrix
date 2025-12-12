@@ -6,7 +6,13 @@
 #' @param spec Spec object produced by mmatrix().
 #' @param newdata A `data.frame` of new observations.
 #' @param unknown How to handle unseen factor levels in `newdata`:
-#'   one of `"other"`, `"zero"`, or `"error"`.
+#'   one of `"zero"` or `"error"`.
+#'   \itemize{
+#'     \item \code{"zero"}: map unseen levels to the baseline level
+#'       (first training level). Under default treatment contrasts,
+#'       this yields all-zero dummy columns.
+#'     \item \code{"error"}: throw an error if any unseen level is found.
+#'   }
 #'
 #' @return A `Matrix::sparseMatrix` with the same columns/order as the
 #'   training design matrix.
@@ -16,9 +22,9 @@
 #' @examples
 #' \dontrun{
 #'   spec <- mmatrix(~ color + x, data = df_train)
-#'   X_new <- mm_predict(spec, df_new, unknown = "other")
+#'   X_new <- mm_predict(spec, df_new, unknown = "zero")
 #' }
-mm_predict <- function(spec, newdata, unknown = c("other", "zero", "error")) {
+mm_predict <- function(spec, newdata, unknown = c("zero", "error")) {
   # Match unknown handling policy
   unknown <- match.arg(unknown)
 
@@ -34,10 +40,6 @@ mm_predict <- function(spec, newdata, unknown = c("other", "zero", "error")) {
   # 1) Coerce factors/characters to training schema levels
   #    and apply unknown-level policy
   nd <- newdata
-
-  if (unknown == "other" && is.null(spec$other_level)) {
-    stop("unknown = 'other' requires spec$other_level to be set by mmatrix().")
-  } # guard for unknown = "other"
 
   for (nm in names(spec$levels_map)) {
     if (!nm %in% names(nd)) next
@@ -60,29 +62,17 @@ mm_predict <- function(spec, newdata, unknown = c("other", "zero", "error")) {
                        nm, paste(unseen, collapse = ", ")))
         }
 
-        if (unknown == "other") {
-          # Map all unseen levels to the designated "other" level
-          other_level <- spec$other_level
-          xchar[!(xchar %in% lv)] <- other_level
-          lv2 <- union(lv, other_level)
-          x <- factor(
-            xchar,
-            levels  = lv2,
-            exclude = if (isTRUE(spec$na_as_level)) NULL else NA
-          )
+        # unknown == "zero":
+        # Map all unseen levels to the baseline level (first training level).
+        # Under the default treatment contrasts, this gives all-zero dummies.
+        baseline_level <- lv[1L]
+        xchar[!(xchar %in% lv)] <- baseline_level
 
-        } else if (unknown == "zero") {
-          # Map all unseen levels to the baseline level (first training level)
-          # Under the default treatment contrasts, this gives all-zero dummies.
-          baseline_level <- lv[1L]
-          xchar[!(xchar %in% lv)] <- baseline_level
-
-          x <- factor(
-            xchar,
-            levels  = lv,
-            exclude = if (isTRUE(spec$na_as_level)) NULL else NA
-          )
-        }
+        x <- factor(
+          xchar,
+          levels  = lv,
+          exclude = if (isTRUE(spec$na_as_level)) NULL else NA
+        )
 
       } else {
         # No unseen levels: just coerce to the training levels

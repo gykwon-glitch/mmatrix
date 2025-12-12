@@ -12,8 +12,7 @@ mmatrix(
   prefer_keep_hard = FALSE,
   contrasts.arg = NULL,
   xlev = NULL,
-  na_as_level = FALSE,
-  other_level = "Other"
+  na_as_level = FALSE
 )
 }
 \arguments{
@@ -38,8 +37,6 @@ rank-deficient if collinearity only involves hard-protected columns.}
 \item{xlev}{Passed to \code{sparse.model.matrix}.}
 
 \item{na_as_level}{Logical; treat NA as its own factor level.}
-
-\item{other_level}{Level to map unseen levels to ("Other").}
 }
 \value{
 An object of class \code{mmatrix_spec}

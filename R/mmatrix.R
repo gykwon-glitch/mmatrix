@@ -17,7 +17,6 @@
 #' @param contrasts.arg Passed to \code{sparse.model.matrix}.
 #' @param xlev Passed to \code{sparse.model.matrix}.
 #' @param na_as_level Logical; treat NA as its own factor level.
-#' @param other_level Level to map unseen levels to ("Other").
 #'
 #' @return An object of class \code{mmatrix_spec}
 #' @export
@@ -25,7 +24,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
                     prefer_keep = NULL,
                     prefer_keep_hard = FALSE,
                     contrasts.arg = NULL, xlev = NULL,
-                    na_as_level = FALSE, other_level = "Other") {
+                    na_as_level = FALSE) {
 
   stopifnot(is.data.frame(data))
 
@@ -163,7 +162,6 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
     terms_obj   = trm,
     levels_map  = get_levels_map(data, trm),
     contrasts   = contrasts.arg,
-    other_level = other_level,
     na_as_level = na_as_level,
     colnames    = colnames(X2),
     assign_map  = assign_vec2

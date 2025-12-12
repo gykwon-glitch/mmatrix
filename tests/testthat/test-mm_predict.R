@@ -19,8 +19,7 @@ test_that("mm_predict basic spec construction helper works", {
     levels_map  = list(color = levels(train$color)),
     col_order   = colnames(X_train),
     contrasts   = NULL,
-    na_as_level = FALSE,
-    other_level = "other"
+    na_as_level = FALSE
   )
 
   expect_true(is.list(spec))
@@ -41,8 +40,7 @@ test_that("mm_predict unknown = 'error' throws on unseen levels", {
     levels_map  = list(color = levels(train$color)),
     col_order   = colnames(X_train),
     contrasts   = NULL,
-    na_as_level = FALSE,
-    other_level = "other"
+    na_as_level = FALSE
   )
 
   newdata <- data.frame(
@@ -56,7 +54,7 @@ test_that("mm_predict unknown = 'error' throws on unseen levels", {
   )
 })
 
-test_that("mm_predict unknown = 'other' uses other level but keeps training col_order", {
+test_that("mm_predict unknown = 'zero' maps unseen levels to baseline and keeps col_order", {
   train <- data.frame(
     color = factor(c("red", "blue", "red"), levels = c("red", "blue")),
     x     = c(1, 2, 3)
@@ -70,8 +68,7 @@ test_that("mm_predict unknown = 'other' uses other level but keeps training col_
     levels_map  = list(color = levels(train$color)),  # no "other" level yet
     col_order   = colnames(X_train),
     contrasts   = NULL,
-    na_as_level = FALSE,
-    other_level = "other"
+    na_as_level = FALSE
   )
 
   newdata <- data.frame(
@@ -79,12 +76,12 @@ test_that("mm_predict unknown = 'other' uses other level but keeps training col_
     x     = c(10, 20)
   )
 
-  X_new <- mm_predict(spec, newdata, unknown = "other")
+  X_new <- mm_predict(spec, newdata, unknown = "zero")
 
   # identical colnames
   expect_identical(colnames(X_new), spec$col_order)
 
-  # same row numbers : remove unknown row
+  # same row numbers: unseen levels do not drop rows
   expect_equal(nrow(X_new), nrow(newdata))
 })
 
@@ -107,8 +104,7 @@ test_that("mm_predict pads missing columns with zeros", {
     levels_map  = list(color = levels(train$color)),
     col_order   = c(base_cols, fake_col),
     contrasts   = NULL,
-    na_as_level = FALSE,
-    other_level = "other"
+    na_as_level = FALSE
   )
 
   # normal newdata
@@ -144,8 +140,7 @@ test_that("mm_predict unknown = 'zero' maps unseen levels to all-zero dummies", 
     levels_map  = list(color = levels(train$color)),
     col_order   = colnames(X_train),
     contrasts   = NULL,
-    na_as_level = FALSE,
-    other_level = "other"
+    na_as_level = FALSE
   )
 
   newdata <- data.frame(

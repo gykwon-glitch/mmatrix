@@ -55,8 +55,7 @@ fit <- mmatrix(
 ~ cyl + am + high_hp + wt + hp,
 data        = train,
 collin_tol  = 1e-9,
-na_as_level = FALSE,
-other_level = "Other"
+na_as_level = FALSE
 )
 
 # Pretty printing: uses print.mmatrix_spec()
@@ -160,8 +159,7 @@ fit_drop <- mmatrix(
   ~ cyl + am + high_hp + wt + hp + hp_dup + all_zero,
   data        = train_drop,
   collin_tol  = 1e-9,
-  na_as_level = FALSE,
-  other_level = "Other"
+  na_as_level = FALSE
 )
 
 mm_report(fit_drop)
@@ -202,7 +200,7 @@ hp       = c(150, 90)
 
 # Apply the training schema to new data
 
-X_new <- mm_predict(fit$spec, newdata = newdata, unknown = "other")
+X_new <- mm_predict(fit$spec, newdata = newdata, unknown = "zero")
 X_new
 #> 2 x 7 sparse Matrix of class "dgCMatrix"
 #>   (Intercept) cyl6 cyl8 ammanual high_hplow  wt  hp
@@ -233,24 +231,16 @@ wt       = c(2.2, 3.0),
 hp       = c(150, 90)
 )
 
-# 1) Map unseen levels to the "Other" bucket in the encoding
-
-X_other <- mm_predict(fit$spec, newdata2, unknown = "other")
-
-# 2) Map unseen levels to the baseline (first training level)
+# Map unseen levels to the baseline (first training level)
 
 # Under default treatment contrasts, this yields all-zero dummies.
 
 X_zero <- mm_predict(fit$spec, newdata2, unknown = "zero")
 
-dim(X_other)
-#> [1] 2 7
 dim(X_zero)
 #> [1] 2 7
 ```
 
-- `unknown = "other"`: unseen levels are mapped to the other_level
-  specified in `mmatrix()` (e.g. `"Other"`), and encoded accordingly.
 - `unknown = "zero"`: unseen levels are mapped to the baseline level
   (first training level), which typically yields all-zero dummy columns
   under default treatment contrasts.
