@@ -3,7 +3,7 @@
 #' Apply an `mmatrix()` spec to new data, returning a sparse design matrix
 #' with the same columns and ordering as in training.
 #'
-#' @param spec Spec object produced by mmatrix().
+#' @param spec Spec object produced by `mmatrix()`.
 #' @param newdata A `data.frame` of new observations.
 #' @param unknown How to handle unseen factor levels in `newdata`:
 #'   one of `"zero"` or `"error"`.
@@ -37,8 +37,7 @@ mm_predict <- function(spec, newdata, unknown = c("zero", "error")) {
     !is.null(spec$col_order)
   )
 
-  # 1) Coerce factors/characters to training schema levels
-  #    and apply unknown-level policy
+  # Coerce factors/characters to training schema levels and apply unknown-level policy
   nd <- newdata
 
   for (nm in names(spec$levels_map)) {
@@ -87,25 +86,25 @@ mm_predict <- function(spec, newdata, unknown = c("zero", "error")) {
     }
   }
 
-  # 2) Build sparse design matrix using the training formula/contrasts
+  # Build sparse design matrix using the training formula/contrasts
   Xn <- Matrix::sparse.model.matrix(
     object        = spec$formula,
     data          = nd,
     contrasts.arg = spec$contrasts
   )
 
-  # 3) Align columns to the training schema (same set + same order)
+  # Align columns to the training schema (same set + same order)
   want <- spec$col_order
   have <- colnames(Xn)
 
-  # (a) Drop extra columns not present in the training schema
+  # Drop extra columns not present in the training schema
   extra_cols <- setdiff(have, want)
   if (length(extra_cols)) {
     Xn <- Xn[, have %in% want, drop = FALSE]
     have <- colnames(Xn)
   }
 
-  # (b) Add missing columns as all-zero sparse columns
+  # Add missing columns as all-zero sparse columns
   missing_cols <- setdiff(want, have)
   if (length(missing_cols)) {
     pad <- Matrix::Matrix(
@@ -120,7 +119,7 @@ mm_predict <- function(spec, newdata, unknown = c("zero", "error")) {
     Xn <- cbind(Xn, pad)
   }
 
-  # (c) Final column reordering to match the training schema exactly
+  # Final column reordering to match the training schema exactly
   Xn <- Xn[, want, drop = FALSE]
 
   return(Xn)

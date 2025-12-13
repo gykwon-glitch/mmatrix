@@ -28,7 +28,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
 
   stopifnot(is.data.frame(data))
 
-  # 1) raw sparse model matrix
+  # raw sparse model matrix
   X0 <- Matrix::sparse.model.matrix(
     object = formula,
     data = data,
@@ -41,7 +41,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
   coln <- colnames(X0)
   term_labels <- c("(Intercept)", attr(trm, "term.labels"))
 
-  # 2) drop all-zero columns
+  # drop all-zero columns
   nz <- Matrix::colSums(X0 != 0)
   keep_idx <- which(nz > 0)
   drop_idx <- setdiff(seq_len(ncol(X0)), keep_idx)
@@ -63,7 +63,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
   assign_vec1 <- assign_vec[keep_idx]
   coln1 <- colnames(X1)
 
-  # 3) Full-matrix normalization + QR (for rank estimation and alias detection)
+  # Full-matrix normalization + QR (for rank estimation and alias detection)
   cnorm_full <- sqrt(Matrix::colSums(X1^2))
   cnorm_full[cnorm_full == 0] <- 1
   X1_qr_full <- X1 %*% Matrix::Diagonal(x = 1 / cnorm_full)
@@ -76,9 +76,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
   rank_full <- if (p_full) sum(dR_full > collin_tol) else 0L
   piv_full  <- QR_full@q + 1L
 
-  # 4) Handling aliased columns
-  #    (Candidates are identified from the full X1; hard/soft prefer_keep
-  #     rules are applied only when choosing which candidates to drop.)
+  # Handling aliased columns
   if (p_full > 0L && rank_full < p_full) {
     # Aliased columns in the full matrix (indices in X1)
     aliased_local <- piv_full[(rank_full + 1L):p_full]
@@ -133,19 +131,18 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
       assign_vec2 <- assign_vec1[keep2]
 
     } else {
-      # If no aliased columns can be dropped due to hard-protection:
-      # allow the final design matrix to remain rank-deficient
+      # If no aliased columns can be dropped due to hard-protection (allow the final design matrix to remain rank-deficient)
       X2          <- X1
       assign_vec2 <- assign_vec1
     }
 
   } else {
-    # No rank deficiency → nothing to drop
+    # No rank deficiency -> nothing to drop
     X2          <- X1
     assign_vec2 <- assign_vec1
   }
 
-  # 5) Recompute rank using the final design matrix (rank_final)
+  # Recompute rank using the final design matrix (rank_final)
   cnorm_fin <- sqrt(Matrix::colSums(X2^2))
   cnorm_fin[cnorm_fin == 0] <- 1
   X2_qr <- X2 %*% Matrix::Diagonal(x = 1 / cnorm_fin)
@@ -155,7 +152,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
   dR_fin <- diag_abs_safe(R_fin)
   rank_final <- if (length(dR_fin)) sum(dR_fin > collin_tol) else 0L
 
-  # 6) Build schema spec
+  # Build schema spec
   sp <- build_spec(
     formula     = formula,
     data        = data,
@@ -167,7 +164,7 @@ mmatrix <- function(formula, data, collin_tol = 1e-9,
     assign_map  = assign_vec2
   )
 
-  # 7) Create object (S3)
+  # Create S3 object
   result <- structure(
     list(
       X           = X2,
