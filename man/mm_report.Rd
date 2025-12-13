@@ -20,8 +20,7 @@ A named list summarizing the encoded design matrix and its encodings,
 with the following components:
 \describe{
 \item{dims}{Named integer vector with the dimensions of the design
-matrix, \code{c(n, p)}, where \code{n} is the number of rows and
-\code{p} is the number of columns.}
+matrix, \code{c(n, p)}, \code{n} : number of rows,  \code{p} : number of columns.}
 
 \item{nnzero}{Total number of non-zero entries in the sparse design
 matrix (as computed by \code{Matrix::nnzero()}).}
@@ -33,7 +32,7 @@ matrix (as computed by \code{Matrix::nnzero()}).}
 \code{1 - density}.}
 
 \item{mem_sparse_mb}{Approximate memory usage (in megabytes) of the
-sparse design matrix object (based on \code{utils::object.size()}).}
+sparse design matrix object.}
 
 \item{mem_dense_est_mb}{Approximate memory usage (in megabytes) that a
 dense \code{n x p} \code{double} matrix would require

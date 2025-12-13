@@ -7,7 +7,7 @@
 mm_predict(spec, newdata, unknown = c("zero", "error"))
 }
 \arguments{
-\item{spec}{Spec object produced by mmatrix().}
+\item{spec}{Spec object produced by \code{mmatrix()}.}
 
 \item{newdata}{A \code{data.frame} of new observations.}
 
